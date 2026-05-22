@@ -38,7 +38,7 @@ export default function Home() {
     setLoading(true)
     setError('')
     fetch(`${BASE_URL}/${year}.json`)
-      .then(r => { if (!r.ok) throw new Error('No s\'han pogut carregar les dades'); return r.json() })
+      .then(r => { if (!r.ok) throw new Error("No shan pogut carregar les dades"); return r.json() })
       .then((json: BudgetItem[]) => { setData(json); setLoading(false) })
       .catch(e => { setError(e.message); setLoading(false) })
   }, [year])
