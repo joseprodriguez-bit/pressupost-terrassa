@@ -42,7 +42,8 @@ export default function Home() {
         if (!r.ok) throw new Error('No s\'han pogut carregar les dades')
         return r.json()
       })
-      .then((json: BudgetItem[]) => {
+       .then((json: BudgetItem[]) => {
+        console.log('PRIMER ELEMENT:', JSON.stringify(json[0]))
         setData(json)
         setLoading(false)
       })
