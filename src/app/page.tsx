@@ -11,11 +11,15 @@ import Footer from '@/components/Footer'
 export type Record = { [key: string]: string | number | null }
 export type Field = { id: string; type: string; info?: { label?: string } }
 
+const RESOURCE_ID = '12aa497c-475e-4321-a471-ecc06510a779'
+const API_URL = 'https://opendata.terrassa.cat/api/action/datastore_search'
+
 export default function Home() {
   const [records, setRecords]   = useState<Record[]>([])
   const [fields, setFields]     = useState<Field[]>([])
   const [total, setTotal]       = useState(0)
   const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState('')
   const [query, setQuery]       = useState('')
   const [offset, setOffset]     = useState(0)
   const [view, setView]         = useState<'table' | 'chart'>('table')
@@ -23,16 +27,25 @@ export default function Home() {
 
   const fetchData = useCallback(async (q: string, off: number) => {
     setLoading(true)
+    setError('')
     try {
-      const params = new URLSearchParams({ limit: String(LIMIT), offset: String(off) })
+      const params = new URLSearchParams({
+        resource_id: RESOURCE_ID,
+        limit: String(LIMIT),
+        offset: String(off),
+      })
       if (q) params.set('q', q)
-      const res  = await fetch(`/api/pressupost?${params}`)
+      const res  = await fetch(`${API_URL}?${params}`)
       const json = await res.json()
       if (json.success) {
         setRecords(json.result.records)
         setFields(json.result.fields.filter((f: Field) => f.id !== '_id'))
         setTotal(json.result.total)
+      } else {
+        setError('No s\'han pogut carregar les dades.')
       }
+    } catch {
+      setError('Error de connexió amb l\'API de Terrassa.')
     } finally {
       setLoading(false)
     }
@@ -95,6 +108,12 @@ export default function Home() {
 
         <SearchBar onSearch={handleSearch} loading={loading} />
         <StatsBar total={total} offset={offset} limit={LIMIT} records={records} loading={loading} />
+
+        {error && (
+          <div className="mb-4 px-4 py-3 rounded-lg text-sm" style={{ background: 'rgba(200,16,46,0.08)', color: '#C8102E' }}>
+            ⚠️ {error}
+          </div>
+        )}
 
         {view === 'table' ? (
           <DataTable

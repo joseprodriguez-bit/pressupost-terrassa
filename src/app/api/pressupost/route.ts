@@ -18,12 +18,22 @@ export async function GET(request: NextRequest) {
 
   try {
     const res = await fetch(`${BASE_URL}?${params.toString()}`, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; pressupost-terrassa/1.0)',
+        'Referer': 'https://opendata.terrassa.cat',
+        'Origin': 'https://opendata.terrassa.cat',
+      },
       next: { revalidate: 3600 },
     })
     const data = await res.json()
-    return NextResponse.json(data)
-  } catch {
-    return NextResponse.json({ error: 'Error en la consulta' }, { status: 500 })
+    return NextResponse.json(data, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      }
+    })
+  } catch (e) {
+    // Fallback: redirect client to call API directly
+    return NextResponse.json({ error: 'proxy_unavailable' }, { status: 503 })
   }
 }
