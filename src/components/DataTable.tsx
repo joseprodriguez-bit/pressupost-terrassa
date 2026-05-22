@@ -21,6 +21,27 @@ function PctBar({ value, modified }: { value: number; modified: number }) {
   )
 }
 
+function ExternalLink({ item }: { item: BudgetItem }) {
+  const code = item.parent_code || item.code
+  const url = `https://pressupostos.terrassa.cat/presupuestos/partidas/${code}/${item.year}/${item.area}/${item.kind}`
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={e => e.stopPropagation()}
+      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full transition-all hover:opacity-80"
+      style={{ background: 'rgba(200,16,46,0.08)', color: '#C8102E', textDecoration: 'none' }}
+      title="Veure detall oficial"
+    >
+      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+      </svg>
+      Detall oficial
+    </a>
+  )
+}
+
 const BG = ['#fff', 'rgba(200,16,46,0.03)', 'rgba(200,16,46,0.06)', 'rgba(200,16,46,0.09)']
 
 function Row({
@@ -38,7 +59,9 @@ function Row({
 
   const isOpen = expanded.has(item.code)
   const indent = depth * 18
-  const displayName = item.name || `Partida ${item.code}`
+  const hasName = item.name !== null && item.name !== undefined
+  const hasDesc = item.description !== null && item.description !== undefined
+  const isLeaf = children.length === 0
 
   return (
     <>
@@ -55,17 +78,29 @@ function Row({
             </span>
           )}
         </td>
-        <td className="px-2 py-2 text-xs font-mono whitespace-nowrap" style={{ color: depth === 0 ? '#94a3b8' : '#cbd5e1' }}>{item.code}</td>
+        <td className="px-2 py-2 text-xs font-mono whitespace-nowrap" style={{ color: depth === 0 ? '#94a3b8' : '#cbd5e1' }}>
+          {item.code}
+        </td>
         <td className="px-2 py-2" style={{ paddingLeft: `${8 + indent}px` }}>
-          <span style={{
-            fontWeight: depth === 0 ? 700 : depth === 1 ? 500 : 400,
-            fontSize: depth === 0 ? '0.875rem' : '0.8rem',
-            color: depth === 0 ? '#1A1A2E' : depth === 1 ? '#334155' : '#64748b',
-            fontStyle: item.name ? 'normal' : 'italic'
-          }}>
-            {depth > 0 && <span className="text-slate-300 mr-1">└</span>}
-            {displayName}
-          </span>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              {depth > 0 && <span className="text-slate-300">└</span>}
+              <span style={{
+                fontWeight: depth === 0 ? 700 : depth === 1 ? 500 : 400,
+                fontSize: depth === 0 ? '0.875rem' : '0.8rem',
+                color: hasName ? (depth === 0 ? '#1A1A2E' : depth === 1 ? '#334155' : '#64748b') : '#94a3b8',
+                fontStyle: hasName ? 'normal' : 'italic'
+              }}>
+                {hasName ? item.name : hasDesc ? item.description!.slice(0, 60) + (item.description!.length > 60 ? '…' : '') : `Partida ${item.code}`}
+              </span>
+              {isLeaf && <ExternalLink item={item} />}
+            </div>
+            {hasName && hasDesc && depth > 0 && (
+              <p className="text-xs text-slate-400 leading-tight" style={{ paddingLeft: depth > 0 ? '12px' : '0' }}>
+                {item.description!.slice(0, 100)}{item.description!.length > 100 ? '…' : ''}
+              </p>
+            )}
+          </div>
         </td>
         <td className="px-2 py-2 text-right tabular-nums hidden sm:table-cell whitespace-nowrap"
           style={{ fontWeight: depth === 0 ? 700 : 500, fontSize: '0.8rem', color: '#C8102E' }}>
