@@ -21,6 +21,8 @@ function PctBar({ value, modified }: { value: number; modified: number }) {
   )
 }
 
+const BG = ['#fff', 'rgba(200,16,46,0.03)', 'rgba(200,16,46,0.06)', 'rgba(200,16,46,0.09)']
+
 function Row({
   item, allData, depth, expanded, onToggle
 }: {
@@ -31,39 +33,41 @@ function Row({
   onToggle: (code: string) => void
 }) {
   const children = allData
-    .filter(d => d.parent_code === item.code && d.kind === item.kind && d.name !== null && d.level === item.level + 1)
+    .filter(d => d.parent_code === item.code && d.kind === item.kind && d.level === item.level + 1)
     .sort((a, b) => b.value_budget_initial - a.value_budget_initial)
 
   const isOpen = expanded.has(item.code)
-  const indent = depth * 20
+  const indent = depth * 18
+  const displayName = item.name || `Partida ${item.code}`
 
   return (
     <>
       <tr
         className="border-b border-slate-100 transition-colors"
-        style={{ background: depth === 0 ? '#fff' : depth === 1 ? 'rgba(200,16,46,0.03)' : 'rgba(200,16,46,0.06)', cursor: children.length > 0 ? 'pointer' : 'default' }}
+        style={{ background: BG[Math.min(depth, 3)], cursor: children.length > 0 ? 'pointer' : 'default' }}
         onClick={() => children.length > 0 && onToggle(item.code)}
       >
-        <td className="py-2 pl-3" style={{ paddingLeft: `${12 + indent}px` }}>
+        <td className="py-2" style={{ paddingLeft: `${12 + indent}px`, width: '32px' }}>
           {children.length > 0 && (
-            <span className="text-slate-400 text-xs font-bold inline-block transition-transform"
-              style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' }}>
+            <span className="text-slate-400 text-xs font-bold inline-block"
+              style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block', transition: 'transform 0.15s' }}>
               ▶
             </span>
           )}
         </td>
-        <td className="px-2 py-2 text-xs font-mono" style={{ color: depth === 0 ? '#94a3b8' : '#cbd5e1' }}>{item.code}</td>
+        <td className="px-2 py-2 text-xs font-mono whitespace-nowrap" style={{ color: depth === 0 ? '#94a3b8' : '#cbd5e1' }}>{item.code}</td>
         <td className="px-2 py-2" style={{ paddingLeft: `${8 + indent}px` }}>
           <span style={{
             fontWeight: depth === 0 ? 700 : depth === 1 ? 500 : 400,
             fontSize: depth === 0 ? '0.875rem' : '0.8rem',
-            color: depth === 0 ? '#1A1A2E' : '#475569'
+            color: depth === 0 ? '#1A1A2E' : depth === 1 ? '#334155' : '#64748b',
+            fontStyle: item.name ? 'normal' : 'italic'
           }}>
-            {depth > 0 && <span className="text-slate-300 mr-1">{'└'.repeat(1)}</span>}
-            {item.name}
+            {depth > 0 && <span className="text-slate-300 mr-1">└</span>}
+            {displayName}
           </span>
         </td>
-        <td className="px-2 py-2 text-right tabular-nums hidden sm:table-cell"
+        <td className="px-2 py-2 text-right tabular-nums hidden sm:table-cell whitespace-nowrap"
           style={{ fontWeight: depth === 0 ? 700 : 500, fontSize: '0.8rem', color: '#C8102E' }}>
           {fmtEur(item.value_budget_initial)}
         </td>
@@ -93,8 +97,7 @@ export default function DataTable({ items, allData, loading }: Props) {
     <div className="rounded-2xl overflow-hidden" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.07)' }}>
       {Array.from({ length: 8 }).map((_, i) => (
         <div key={i} className="flex gap-4 px-5 py-3 border-b border-slate-100">
-          <div className="skeleton h-4 flex-1" />
-          <div className="skeleton h-4 w-24" />
+          <div className="skeleton h-4 flex-1" /><div className="skeleton h-4 w-24" />
         </div>
       ))}
     </div>
