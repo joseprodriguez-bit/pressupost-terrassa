@@ -66,24 +66,3 @@ export default function DataTable({ items, loading }: Props) {
     </div>
   )
 }
-        </thead>
-        <tbody>
-          {items.map((item, i) => (
-            <tr key={i} className="data-row border-b border-slate-100 last:border-0">
-              <td className="px-5 py-3" style={{ color: '#1A1A2E' }}>
-                <span className="font-medium">{item.name || '—'}</span>
-                {item.code && <span className="ml-2 text-xs text-slate-400">{item.code}</span>}
-              </td>
-              <td className="px-5 py-3 hidden sm:table-cell text-slate-500 text-xs">
-                {item.functional_area_name || item.area_name || '—'}
-              </td>
-              <td className="px-5 py-3 text-right font-semibold tabular-nums" style={{ color: '#C8102E' }}>
-                {fmtEur(item.amount)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
