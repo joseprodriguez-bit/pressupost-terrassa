@@ -33,8 +33,3 @@ export default function StatsPanel({ total, count, kind, year, loading }: Props)
     </div>
   )
 }
-        }
-      </div>
-    </div>
-  )
-}
