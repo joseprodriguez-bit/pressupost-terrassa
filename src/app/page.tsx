@@ -119,7 +119,7 @@ export default function Home() {
           </div>
         </div>
 
-        <SearchBar onSearch={setQuery} loading={loading} />
+        <SearchBar onSearch={setQuery} />
 
         {error && (
           <div className="mb-4 px-4 py-3 rounded-lg text-sm" style={{ background: 'rgba(200,16,46,0.08)', color: '#C8102E' }}>
