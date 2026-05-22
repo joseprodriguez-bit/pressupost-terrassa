@@ -10,40 +10,41 @@ import StatsPanel from '@/components/StatsPanel'
 import YearSelector from '@/components/YearSelector'
 
 export type BudgetItem = {
-  name: string
-  amount: number
-  amount_per_inhabitant?: number
-  kind: 'I' | 'G'  // Ingressos / Despeses
-  area_name?: string
-  functional_area_name?: string
-  economic_area?: string
+  id: string
+  code: string
   year: number
-  level?: number
-  code?: string
+  area: string
+  kind: 'I' | 'G'
+  name: string | null
+  description: string | null
+  level: number
+  parent_code: string
+  value_budget_initial: number
+  value_budget_modified: number
+  value_budget_execution: number
 }
 
 const BASE_URL = 'https://gobierto-populate-production.s3.eu-west-1.amazonaws.com/gobierto_budgets/8279/data/annual'
 const YEARS = [2025, 2024, 2023, 2022, 2021, 2020, 2019]
 
 export default function Home() {
-  const [data, setData]         = useState<BudgetItem[]>([])
-  const [loading, setLoading]   = useState(true)
-  const [error, setError]       = useState('')
-  const [year, setYear]         = useState(2025)
-  const [kind, setKind]         = useState<'G' | 'I'>('G')
-  const [query, setQuery]       = useState('')
-  const [view, setView]         = useState<'table' | 'chart'>('chart')
+  const [data, setData]       = useState<BudgetItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState('')
+  const [year, setYear]       = useState(2025)
+  const [kind, setKind]       = useState<'G' | 'I'>('G')
+  const [query, setQuery]     = useState('')
+  const [view, setView]       = useState<'table' | 'chart'>('chart')
 
   useEffect(() => {
     setLoading(true)
     setError('')
     fetch(`${BASE_URL}/${year}.json`)
       .then(r => {
-        if (!r.ok) throw new Error('No s\'han pogut carregar les dades')
+        if (!r.ok) throw new Error("No shan pogut carregar les dades")
         return r.json()
       })
-       .then((json: BudgetItem[]) => {
-        console.log('PRIMER ELEMENT:', JSON.stringify(json[0]))
+      .then((json: BudgetItem[]) => {
         setData(json)
         setLoading(false)
       })
@@ -55,26 +56,24 @@ export default function Home() {
 
   const filtered = data
     .filter(d => d.kind === kind)
-    .filter(d => d.level === 2 || (!d.level && d.amount > 0))
+    .filter(d => d.level === 2 && d.name !== null)
     .filter(d => {
       if (!query) return true
       const q = query.toLowerCase()
       return (
         d.name?.toLowerCase().includes(q) ||
-        d.area_name?.toLowerCase().includes(q) ||
-        d.functional_area_name?.toLowerCase().includes(q)
+        d.description?.toLowerCase().includes(q) ||
+        d.code?.toLowerCase().includes(q)
       )
     })
-    .sort((a, b) => b.amount - a.amount)
+    .sort((a, b) => b.value_budget_initial - a.value_budget_initial)
 
-  const total = filtered.reduce((s, d) => s + d.amount, 0)
+  const total = filtered.reduce((s, d) => s + d.value_budget_initial, 0)
 
   return (
     <div className="min-h-screen" style={{ background: '#F5F0E8' }}>
       <Header />
-
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        {/* Hero */}
         <section className="pt-12 pb-8">
           <p className="text-xs font-semibold tracking-[0.2em] uppercase mb-2" style={{ color: '#C8102E' }}>
             Dades obertes · Ajuntament de Terrassa
@@ -89,31 +88,24 @@ export default function Home() {
           </p>
         </section>
 
-        {/* Controls */}
         <div className="flex flex-wrap gap-3 mb-6 items-center">
           <YearSelector years={YEARS} value={year} onChange={setYear} />
-
           <div className="flex rounded-xl overflow-hidden border border-slate-200">
-            <button onClick={() => setKind('G')}
-              className="px-4 py-2 text-sm font-medium transition-all"
+            <button onClick={() => setKind('G')} className="px-4 py-2 text-sm font-medium transition-all"
               style={{ background: kind === 'G' ? '#C8102E' : '#fff', color: kind === 'G' ? '#fff' : '#64748b' }}>
               Despeses
             </button>
-            <button onClick={() => setKind('I')}
-              className="px-4 py-2 text-sm font-medium transition-all"
+            <button onClick={() => setKind('I')} className="px-4 py-2 text-sm font-medium transition-all"
               style={{ background: kind === 'I' ? '#C8102E' : '#fff', color: kind === 'I' ? '#fff' : '#64748b' }}>
               Ingressos
             </button>
           </div>
-
           <div className="flex rounded-xl overflow-hidden border border-slate-200 ml-auto">
-            <button onClick={() => setView('chart')}
-              className="px-4 py-2 text-sm font-medium transition-all"
+            <button onClick={() => setView('chart')} className="px-4 py-2 text-sm font-medium transition-all"
               style={{ background: view === 'chart' ? '#1A1A2E' : '#fff', color: view === 'chart' ? '#fff' : '#64748b' }}>
               Gràfic
             </button>
-            <button onClick={() => setView('table')}
-              className="px-4 py-2 text-sm font-medium transition-all"
+            <button onClick={() => setView('table')} className="px-4 py-2 text-sm font-medium transition-all"
               style={{ background: view === 'table' ? '#1A1A2E' : '#fff', color: view === 'table' ? '#fff' : '#64748b' }}>
               Taula
             </button>
@@ -124,7 +116,7 @@ export default function Home() {
 
         {error && (
           <div className="mb-4 px-4 py-3 rounded-lg text-sm" style={{ background: 'rgba(200,16,46,0.08)', color: '#C8102E' }}>
-            ⚠️ {error}
+            {error}
           </div>
         )}
 
@@ -135,7 +127,6 @@ export default function Home() {
           : <DataTable items={filtered} loading={loading} />
         }
       </main>
-
       <Footer />
     </div>
   )
