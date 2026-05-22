@@ -1,4 +1,4 @@
-'use client'
+  'use client'
 
 import { useState, useEffect } from 'react'
 import Header from '@/components/Header'
@@ -124,7 +124,7 @@ export default function Home() {
 
         {view === 'chart'
           ? <ChartView items={filtered} loading={loading} kind={kind} />
-          : <DataTable items={filtered} loading={loading} />
+          : <DataTable items={filtered} allData={data} loading={loading} />
         }
       </main>
       <Footer />
