@@ -44,6 +44,27 @@ export default function ChartView({ items, loading, kind }: Props) {
             tick={{ fontSize: 11, fill: '#64748b', fontFamily: 'DM Sans, sans-serif' }}
             width={75} />
           <Tooltip
+            formatter={(v: number) => [fmtM(v), 'Pressupost inicial']}
+            labelStyle={{ fontFamily: 'DM Sans, sans-serif', color: '#1A1A2E', fontWeight: 600 }}
+            contentStyle={{ borderRadius: 8, border: '1px solid rgba(200,16,46,0.2)', fontFamily: 'DM Sans, sans-serif' }} />
+          <Bar dataKey="value_budget_initial" radius={[4, 4, 0, 0]}>
+            {top20.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+      <ResponsiveContainer width="100%" height={420}>
+        <BarChart data={top20} margin={{ top: 10, right: 20, left: 20, bottom: 100 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0ebe0" />
+          <XAxis dataKey="name"
+            tick={{ fontSize: 11, fill: '#64748b', fontFamily: 'DM Sans, sans-serif' }}
+            angle={-40} textAnchor="end" interval={0} />
+          <YAxis tickFormatter={fmtM}
+            tick={{ fontSize: 11, fill: '#64748b', fontFamily: 'DM Sans, sans-serif' }}
+            width={75} />
+          <Tooltip
             formatter={(v: number) => [fmtM(v), 'Import']}
             labelStyle={{ fontFamily: 'DM Sans, sans-serif', color: '#1A1A2E', fontWeight: 600 }}
             contentStyle={{ borderRadius: 8, border: '1px solid rgba(200,16,46,0.2)', fontFamily: 'DM Sans, sans-serif' }} />
