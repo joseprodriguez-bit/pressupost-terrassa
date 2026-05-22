@@ -9,6 +9,75 @@ function fmtEur(n: number) {
   return n.toLocaleString('ca-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 }
 
+function PctBar({ value, modified }: { value: number; modified: number }) {
+  const pct = modified > 0 ? Math.round((value / modified) * 100) : 0
+  return (
+    <div className="flex items-center gap-2 justify-end">
+      <span className="text-xs text-slate-400">{pct}%</span>
+      <div className="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+        <div className="h-full rounded-full" style={{ width: `${Math.min(pct,100)}%`, background: pct >= 90 ? '#16a34a' : '#D4A017' }} />
+      </div>
+    </div>
+  )
+}
+
+function Row({
+  item, allData, depth, expanded, onToggle
+}: {
+  item: BudgetItem
+  allData: BudgetItem[]
+  depth: number
+  expanded: Set<string>
+  onToggle: (code: string) => void
+}) {
+  const children = allData
+    .filter(d => d.parent_code === item.code && d.kind === item.kind && d.name !== null && d.level === item.level + 1)
+    .sort((a, b) => b.value_budget_initial - a.value_budget_initial)
+
+  const isOpen = expanded.has(item.code)
+  const indent = depth * 20
+
+  return (
+    <>
+      <tr
+        className="border-b border-slate-100 transition-colors"
+        style={{ background: depth === 0 ? '#fff' : depth === 1 ? 'rgba(200,16,46,0.03)' : 'rgba(200,16,46,0.06)', cursor: children.length > 0 ? 'pointer' : 'default' }}
+        onClick={() => children.length > 0 && onToggle(item.code)}
+      >
+        <td className="py-2 pl-3" style={{ paddingLeft: `${12 + indent}px` }}>
+          {children.length > 0 && (
+            <span className="text-slate-400 text-xs font-bold inline-block transition-transform"
+              style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' }}>
+              ▶
+            </span>
+          )}
+        </td>
+        <td className="px-2 py-2 text-xs font-mono" style={{ color: depth === 0 ? '#94a3b8' : '#cbd5e1' }}>{item.code}</td>
+        <td className="px-2 py-2" style={{ paddingLeft: `${8 + indent}px` }}>
+          <span style={{
+            fontWeight: depth === 0 ? 700 : depth === 1 ? 500 : 400,
+            fontSize: depth === 0 ? '0.875rem' : '0.8rem',
+            color: depth === 0 ? '#1A1A2E' : '#475569'
+          }}>
+            {depth > 0 && <span className="text-slate-300 mr-1">{'└'.repeat(1)}</span>}
+            {item.name}
+          </span>
+        </td>
+        <td className="px-2 py-2 text-right tabular-nums hidden sm:table-cell"
+          style={{ fontWeight: depth === 0 ? 700 : 500, fontSize: '0.8rem', color: '#C8102E' }}>
+          {fmtEur(item.value_budget_initial)}
+        </td>
+        <td className="px-2 py-2 hidden md:table-cell">
+          <PctBar value={item.value_budget_execution} modified={item.value_budget_modified} />
+        </td>
+      </tr>
+      {isOpen && children.map(child => (
+        <Row key={child.code} item={child} allData={allData} depth={depth + 1} expanded={expanded} onToggle={onToggle} />
+      ))}
+    </>
+  )
+}
+
 export default function DataTable({ items, allData, loading }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
@@ -19,10 +88,6 @@ export default function DataTable({ items, allData, loading }: Props) {
       return next
     })
   }
-
-  const getChildren = (code: string, kind: 'G' | 'I') =>
-    allData.filter(d => d.parent_code === code && d.kind === kind && d.level === 3 && d.name !== null)
-      .sort((a, b) => b.value_budget_initial - a.value_budget_initial)
 
   if (loading) return (
     <div className="rounded-2xl overflow-hidden" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.07)' }}>
@@ -46,78 +111,17 @@ export default function DataTable({ items, allData, loading }: Props) {
       <table className="w-full text-sm">
         <thead>
           <tr style={{ background: '#1A1A2E' }}>
-            <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider w-8" style={{ color: 'rgba(255,255,255,0.8)' }}></th>
-            <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.8)' }}>Codi</th>
-            <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.8)' }}>Partida</th>
-            <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider hidden sm:table-cell" style={{ color: 'rgba(255,255,255,0.8)' }}>Pres. inicial</th>
-            <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider hidden md:table-cell" style={{ color: 'rgba(255,255,255,0.8)' }}>Executat</th>
+            <th className="w-8 py-3"></th>
+            <th className="px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.7)' }}>Codi</th>
+            <th className="px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.7)' }}>Partida</th>
+            <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider hidden sm:table-cell" style={{ color: 'rgba(255,255,255,0.7)' }}>Pres. inicial</th>
+            <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider hidden md:table-cell" style={{ color: 'rgba(255,255,255,0.7)' }}>Execució</th>
           </tr>
         </thead>
         <tbody>
-          {items.map((item) => {
-            const children = getChildren(item.code, item.kind)
-            const isOpen = expanded.has(item.code)
-            const pct = item.value_budget_modified > 0
-              ? Math.round((item.value_budget_execution / item.value_budget_modified) * 100) : 0
-
-            return (
-              <>
-                <tr
-                  key={item.code}
-                  className="data-row border-b border-slate-100 cursor-pointer"
-                  onClick={() => children.length > 0 && toggle(item.code)}
-                >
-                  <td className="pl-4 py-3 text-center">
-                    {children.length > 0 && (
-                      <span className="text-slate-400 text-xs font-bold transition-transform inline-block"
-                        style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' }}>
-                        ▶
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-3 text-xs text-slate-400 font-mono">{item.code}</td>
-                  <td className="px-3 py-3 font-semibold" style={{ color: '#1A1A2E' }}>{item.name}</td>
-                  <td className="px-3 py-3 text-right font-bold tabular-nums hidden sm:table-cell" style={{ color: '#C8102E' }}>
-                    {fmtEur(item.value_budget_initial)}
-                  </td>
-                  <td className="px-3 py-3 hidden md:table-cell">
-                    <div className="flex items-center gap-2 justify-end">
-                      <span className="text-xs text-slate-500">{pct}%</span>
-                      <div className="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: `${Math.min(pct,100)}%`, background: pct >= 90 ? '#16a34a' : '#D4A017' }} />
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-
-                {isOpen && children.map(child => {
-                  const cpct = child.value_budget_modified > 0
-                    ? Math.round((child.value_budget_execution / child.value_budget_modified) * 100) : 0
-                  return (
-                    <tr key={child.code} className="border-b border-slate-50"
-                      style={{ background: 'rgba(200,16,46,0.03)' }}>
-                      <td className="pl-4 py-2"></td>
-                      <td className="px-3 py-2 text-xs text-slate-300 font-mono">{child.code}</td>
-                      <td className="px-3 py-2 text-sm text-slate-600 pl-6">
-                        <span className="mr-2 text-slate-300">└</span>{child.name}
-                      </td>
-                      <td className="px-3 py-2 text-right text-sm tabular-nums hidden sm:table-cell" style={{ color: '#C8102E' }}>
-                        {fmtEur(child.value_budget_initial)}
-                      </td>
-                      <td className="px-3 py-2 hidden md:table-cell">
-                        <div className="flex items-center gap-2 justify-end">
-                          <span className="text-xs text-slate-400">{cpct}%</span>
-                          <div className="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                            <div className="h-full rounded-full" style={{ width: `${Math.min(cpct,100)}%`, background: cpct >= 90 ? '#16a34a' : '#D4A017' }} />
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </>
-            )
-          })}
+          {items.map(item => (
+            <Row key={item.code} item={item} allData={allData} depth={0} expanded={expanded} onToggle={toggle} />
+          ))}
         </tbody>
       </table>
     </div>
